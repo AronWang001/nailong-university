@@ -2,7 +2,8 @@
 
 打开 `宇宙奶龙大学.com` → 先播一段「奶龙护送你入学」的动画 → 动画播完自动跳到 **广州大学**官网（https://www.gzhu.edu.cn/）。
 
-纯静态，没有任何构建步骤和外部依赖，丢到任意静态托管上就能跑。
+纯静态，没有任何构建步骤和外部依赖，丢到任意静态托管上就能跑 ——
+**推荐 [Cloudflare Pages](#方案-acloudflare-pages推荐但要迁-ns) 或 [GitHub Pages](#方案-bgithub-pages不用动-ns最省事)，两个都不需要买服务器、也不需要 ICP 备案。**
 
 ```
 index.html                  页面 + 动画 + 跳转逻辑（CSS/JS 全部内联）
@@ -11,6 +12,7 @@ core.webp / core.png        校徽中心：奶龙（站在文字环底下，所�
 favicon.ico                 浏览器页签图标（16/32/48）
 favicon.png                 iOS / 安卓主屏图标（512×512）
 og.png                      微信、QQ、Twitter 分享卡片图（1200×630）
+CNAME                       GitHub Pages 绑定自定义域名用（已填好）
 双手交叉站立.png            奶龙原图素材 ← 保留着，方便以后重做抠图
 tools/prepare_nailong.py    奶龙抠图 → core.png / core.webp / favicon.*
 tools/build_assets.py       文字环 ring.svg + 分享卡片 tools/og.html
@@ -21,6 +23,13 @@ tools/preview-core.png      抠图效果的白底预览
 
 ```powershell
 python tools/prepare_nailong.py && python tools/build_assets.py
+```
+
+本地已经是一个初始化好的 git 仓库（分支 `main`，首次提交已完成），推送即可发布：
+
+```powershell
+git remote add origin https://github.com/<你的用户名>/nailong-university.git
+git push -u origin main
 ```
 
 ---
@@ -106,9 +115,61 @@ python tools/build_assets.py       # 文字环 → ring.svg + tools/og.html
   --window-size=1200,630 --screenshot="og.png" "file:///<绝对路径>/tools/og.html"
 ```
 
-## 4. 部署到腾讯云（域名已在腾讯云）
+## 4. 部署：GitHub Pages 或 Cloudflare Pages（都不用买服务器）
 
-### 方案 A：COS 对象存储 + CDN（不用服务器，推荐）
+两个都**不需要 ICP 备案**（服务器在境外），免费额度对这么一个小页面来说完全用不完。
+唯一要注意的是国内访问速度：GitHub Pages 在国内时快时慢，Cloudflare 一般更稳。
+
+| | GitHub Pages | Cloudflare Pages |
+| --- | --- | --- |
+| 根域名（apex） | ✅ 4 条 A 记录 | ⚠️ **必须把 NS 迁到 Cloudflare** |
+| 子域名（www.） | ✅ CNAME | ✅ CNAME（NS 不用动） |
+| HTTPS | ✅ 自动，可开 Enforce HTTPS | ✅ 自动 |
+| 部署方式 | git push | git push 或拖拽上传 |
+| 国内访问 | 一般（可能被墙/很慢） | 较好 |
+
+> ⚠️ **最重要的一条**：Cloudflare Pages 的**根域名**（`宇宙奶龙大学.com` 本身）要求这个域名是 Cloudflare 上的一个 zone，
+> 也就是要把 NS 从 DNSPod 改成 Cloudflare 的。Cloudflare 官方文档原文就是这么写的：
+> *"To use a custom apex domain with your Pages project, configure your nameservers to point to Cloudflare's nameservers."*
+> 如果不想动 NS，那 Cloudflare Pages 只能挂 `www.宇宙奶龙大学.com` 这种子域名。
+
+### 方案 A：Cloudflare Pages（推荐，但要迁 NS）
+
+1. **迁 NS**：Cloudflare 控制台 → Add a site → 填 `宇宙奶龙大学.com` → 选 Free 计划 → 它会给你两个 NS（形如 `xxx.ns.cloudflare.com`）。
+   去 DNSPod 把域名的 NS 改成这两个（腾讯云域名控制台 → 域名 → DNS 修改）。等生效，一般几分钟到几小时。
+   ⚠️ 迁 NS 前先在 Cloudflare 里把原有解析记录补齐（或让它自动扫描导入），否则邮件等其它服务会断。
+2. **建 Pages 项目**：Workers & Pages → Create → Pages → Connect to Git → 选仓库。
+   构建命令**留空**，输出目录填 `/`（纯静态，没有构建步骤）。
+3. **绑域名**：项目 → Custom domains → Set up a domain → 填 `xn--psszg58cydsdq780c.com`（punycode；因为已经是 Cloudflare 的 zone，CNAME 会自动创建）。
+   顺手把 `www` 也加上，或者在 Rules → Redirect Rules 里把 `www` 302 到根域名。
+4. HTTPS 证书自动签发，不用管。国内访问如果遇到慢/被墙，可以在 DNS 里换优选 IP（进阶玩法，非必需）。
+
+### 方案 B：GitHub Pages（不用动 NS，最省事）
+
+1. **建仓库**：GitHub 上新建一个 **public** 仓库（免费账号的 Pages 只支持公开仓库），比如 `nailong-university`。
+2. **推代码**：本地已经初始化好 git 仓库并提交了（分支 `main`），只要加个远程地址推上去：
+
+   ```powershell
+   git remote add origin https://github.com/<你的用户名>/nailong-university.git
+   git push -u origin main
+   ```
+3. **开 Pages**：仓库 → Settings → Pages → Source 选 `Deploy from a branch` → 分支 `main`、目录 `/ (root)` → Save。
+4. **绑域名**：同页面 Custom domain 填 `宇宙奶龙大学.com`。仓库里的 `CNAME` 文件我已经放好了（内容就是这个域名），
+   注意 GitHub 要求**国际化域名必须填 punycode**，也就是 `xn--psszg58cydsdq780c.com`；两种写法 GitHub 都能识别，但建议填 punycode 更保险。
+5. **加解析**（DNSPod，NS 不用动）：
+
+   | 主机记录 | 类型 | 记录值 |
+   | --- | --- | --- |
+   | `@` | A | `185.199.108.153` |
+   | `@` | A | `185.199.109.153` |
+   | `@` | A | `185.199.110.153` |
+   | `@` | A | `185.199.111.153` |
+   | `www` | CNAME | `<你的用户名>.github.io` |
+
+   （A 记录是 GitHub 官方给的四个 IP；`www` 那条 CNAME 让 `www` 自动 302 到根域名。）
+6. **HTTPS**：回到 Settings → Pages，等证书签发完（一般几分钟，最多 24 小时），勾上 **Enforce HTTPS**。
+
+### 方案 C：腾讯云 COS + CDN（也不买服务器，但国内节点要备案）
 
 1. **实名认证**：域名先完成实名认证，否则 DNSPod 不给解析。
 2. **建桶**：对象存储 COS → 创建存储桶，地域选就近（如 `ap-guangzhou`），权限选「公有读私有写」。
@@ -118,13 +179,13 @@ python tools/build_assets.py       # 文字环 → ring.svg + tools/og.html
    想彻底干净，就在 CDN 里加一条重定向规则：**路径不含扩展名 → 302 到 `/`**。平时只访问根域名的话可以不管。
 5. **绑自定义域名**：桶 → 域名管理 → 添加自定义 CDN 加速域名，加速域名填 `xn--psszg58cydsdq780c.com`（= 宇宙奶龙大学.com），源站类型「默认源站」。
 6. **上 HTTPS**：腾讯云 SSL 证书 → 申请免费 DV 证书（DNS 验证，DNSPod 可一键添加验证记录）→ 在 CDN 域名里部署证书 → 打开「强制 HTTPS」。
-7. **加解析**：DNSPod 里给 `@` 加一条 **CNAME**，记录值填第 5 步给出的 CNAME 域名；想要 `www` 也通就再加一条同值的 CNAME（记得把 `index.html` 里的 `og:image` 换成对应域名）。
-   （`@` 的 CNAME 和 MX 记录会冲突，本站不需要邮箱可以忽略；若以后要企业邮，就把主域名用 A 记录指向 CDN 提供的回源 IP。）
+7. **加解析**：DNSPod 里给 `@` 加一条 **CNAME**，记录值填第 5 步给出的 CNAME 域名。
+   （`@` 的 CNAME 和 MX 记录会冲突；DNSPod 的免费版支持根域名 CNAME，但部分解析商会拒绝。）
 8. **设缓存**：CDN → 缓存配置里给 `index.html` 设「不缓存」或很短，图片设 7 天，避免改完文案看不到效果。
 
 > 静态网站里中文域名会自动按 punycode（`xn--psszg58cydsdq780c.com`）填写，控制台里显示成中文是正常的。
 
-### 方案 B：轻量应用服务器 / CVM + Nginx
+### 方案 D：轻量应用服务器 / CVM + Nginx
 
 ```nginx
 # HTTP 全量跳 HTTPS
@@ -155,7 +216,9 @@ server {
 
 DNSPod 给 `@` 和 `www` 各加一条 **A 记录**指向服务器公网 IP。
 
-> ⚠️ 服务器在**中国大陆**地域必须先完成 **ICP 备案**（腾讯云备案控制台，约 1～20 个工作日），否则 80/443 会被阻断；不想备案就选香港/新加坡地域，但国内访问会慢一些。COS + CDN 方案同样受此限制：CDN 加速域名在国内节点也需要备案（用海外 CDN 节点则不需要）。
+> ⚠️ 只有这个方案（和方案 C 的国内节点）需要 **ICP 备案**（腾讯云备案控制台，约 1～20 个工作日），否则 80/443 会被阻断。
+> **GitHub Pages 和 Cloudflare Pages 都在境外，不需要备案** —— 这也是建议你用它们的原因。
+> 代价是国内访问速度：GitHub Pages 时快时慢，Cloudflare 相对稳一些，但都不会比备案过的国内节点快。
 
 ## 5. 上线自检
 
@@ -167,8 +230,23 @@ DNSPod 给 `@` 和 `www` 各加一条 **A 记录**指向服务器公网 IP。
 - [ ] 浏览器页签显示奶龙图标（`favicon.ico` + `favicon.png`）
 - [ ] 关掉浏览器 JS 也能跳（页面里有 `<noscript>` 的 meta refresh 兜底）
 - [ ] **双击本地 `index.html` 时图片也正常**（资源是相对路径，不该出现碎图标）
+- [ ] `http://` 能自动跳 `https://`（GitHub Pages 记得勾 Enforce HTTPS；Cloudflare 自动有）
+- [ ] 从国内网络实测打开一次（GitHub Pages 偶尔会慢到十几秒，能接受就行）
 
-## 6. 说明
+## 6. 改了东西怎么重新发布
+
+```powershell
+git add -A
+git commit -m "改了 xxx"
+git push
+```
+
+GitHub Pages 和 Cloudflare Pages 都会在推上去之后自动重新发布，一般 1 分钟内生效。
+
+> 页面资源里的 `og.png`、`core.webp` 这些文件名没变，浏览器/CDN 可能缓存旧版本。
+> 如果改完看不到效果，硬刷新（Ctrl+F5）或者给文件名加版本号（如 `core.v2.webp`）。
+
+## 7. 说明
 
 * 本站与广州大学**没有任何官方关联**，纯属网友自制的整活跳转页，页面里的「关于」弹窗已注明。
 * 参考站 `中国奶龙大学.com` 的做法是：域名在 Squarespace 上做 **302** 跳到 `nailong.dykey.net` 落地页，再由落地页的 JS 跳到学校官网（大连理工大学）。本站把它简化成「一个静态页 + 前端跳转」，少一跳、更快，也不需要第二个域名。
