@@ -8,3 +8,8 @@
 # Python 脚本的字节码
 __pycache__/
 *.pyc
+
+# IDE 配置（JetBrains / VS Code），跟站点无关，别提交
+.idea/
+.vscode/
+*.iml
