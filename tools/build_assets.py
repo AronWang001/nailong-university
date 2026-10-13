@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""生成 宇宙奶龙大学.com 的矢量资源：ring.svg（文字环）+ tools/og.html（分享卡片）
+"""生成 首都奶龙大学.com 的矢量资源：ring.svg（文字环）+ tools/og.html（分享卡片）
 
 跑法： python tools/build_assets.py
 （奶龙本体的 core.png / core.webp / favicon.* 由 tools/prepare_nailong.py 生成）
@@ -27,7 +27,7 @@ WHITE = "#ffffff"
 
 # ---------------------------------------------------------------- 文字环
 def build_ring(slots: int = 35, radius: int = 252, size: int = 32,
-               text: str = "宇宙奶龙大学", sep: str = "·") -> str:
+               text: str = "首都奶龙大学", sep: str = "·") -> str:
     """沿着圆均分 slots 个字符位，按 文字 + 分隔符 循环排布。"""
     pattern = list(text) + [sep]
     step = 360.0 / slots
@@ -101,8 +101,8 @@ def build_og_html() -> str:
   </div>
   <div class="txt">
     <div class="tag">NAILONG UNIVERSITY</div>
-    <h1>宇宙奶龙大学</h1>
-    <p>奶龙正在护送你前往 广州大学</p>
+    <h1>首都奶龙大学</h1>
+    <p>奶龙正在护送你前往 民政职业大学</p>
   </div>
 </body>
 </html>
