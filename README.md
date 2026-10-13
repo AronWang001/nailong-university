@@ -122,7 +122,7 @@ python tools/build_assets.py       # 文字环 → ring.svg + tools/og.html
 
 | | GitHub Pages | Cloudflare Pages |
 | --- | --- | --- |
-| 根域名（apex） | ✅ 4 条 A 记录 | ⚠️ **必须把 NS 迁到 Cloudflare** |
+| 根域名（apex） | ✅ 2 条 A 记录就行（DNSPod 免费版限 2 条） | ⚠️ **必须把 NS 迁到 Cloudflare** |
 | 子域名（www.） | ✅ CNAME | ✅ CNAME（NS 不用动） |
 | HTTPS | ✅ 自动，可开 Enforce HTTPS | ✅ 自动 |
 | 部署方式 | git push | git push 或拖拽上传 |
@@ -159,16 +159,26 @@ python tools/build_assets.py       # 文字环 → ring.svg + tools/og.html
    GitHub 每次部署都会按这个文件校正域名，中文字符在有些环节会出问题。
 5. **加解析**（DNSPod，NS 不用动）：
 
+   ⚠️ **DNSPod 免费版对「同一主机记录 + 同一记录类型」最多只能加 2 条**，而 GitHub 官方给了 4 个 IP。
+   **不用纠结，随便挑 2 个就行** —— 这 4 个 IP 是同一个 CDN 集群的冗余入口，内容完全一样
+   （实测 4 个 IP 返回的 `pages.github.com` 字节数分毫不差，都是 14446）：
+
    | 主机记录 | 类型 | 记录值 |
    | --- | --- | --- |
-   | `@` | A | `185.199.108.153` |
    | `@` | A | `185.199.109.153` |
-   | `@` | A | `185.199.110.153` |
-   | `@` | A | `185.199.111.153` |
+   | `@` | A | `185.199.108.153` |
    | `www` | CNAME | `<你的用户名>.github.io` |
 
-   （A 记录是 GitHub 官方给的四个 IP；`www` 那条 CNAME 让 `www` 自动 302 到根域名。）
+   （`www` 那条 CNAME 让 `www` 自动 302 到根域名。4 个 IP 实测延迟 0.69~0.82s，差异在噪声范围内，挑最快的两个即可。）
 6. **HTTPS**：回到 Settings → Pages，等证书签发完（一般几分钟，最多 24 小时），勾上 **Enforce HTTPS**。
+
+> **关于 IPv6**：GitHub 官方还提供了 4 个 AAAA 记录，但**建议先别加**。
+> 实测你这台机器虽然分到了公网 IPv6（教育网 `2001:da8:` 开头），但连 GitHub 的 `2606:50c0:8000::153` 直接超时
+> —— 加了 AAAA 反而会让支持 IPv6 的访客优先走不通的路，白等十几秒才回落到 IPv4。等你确认能连通再加不迟。
+
+> **如果一定要用满 4 个 IP**，有两条路（都不必）：
+> ① 把 NS 迁到 Cloudflare，那边没有这种条数限制（顺带还能用 Cloudflare Pages）；
+> ② 升级 DNSPod 付费套餐。对这么个小站来说，2 条 A 记录已经完全够用了。
 
 ### 方案 C：腾讯云 COS + CDN（也不买服务器，但国内节点要备案）
 
@@ -224,6 +234,7 @@ DNSPod 给 `@` 和 `www` 各加一条 **A 记录**指向服务器公网 IP。
 ## 5. 上线自检
 
 - [ ] `https://宇宙奶龙大学.com/?stay` 能看到完整动画，进度条走满、奶龙和文字环都在
+- [ ] 奶龙在徽章正中间（不偏左不偏右；`tools/prepare_nailong.py` 跑完会打印偏移量自检）
 - [ ] 不带 `?stay` 时，约 3.1 秒后落到 `https://www.gzhu.edu.cn/`，地址栏不残留本站
 - [ ] 手机上打开正常（徽章按 `min(64vw, 44vh, 340px)` 自适应，横竖屏都不溢出）
 - [ ] 深色模式下文字环和「宇宙」星空背景正常（系统切深色即可看到）
