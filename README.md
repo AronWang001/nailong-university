@@ -12,7 +12,7 @@ core.webp / core.png        校徽中心：奶龙（站在文字环底下，所�
 favicon.ico                 浏览器页签图标（16/32/48）
 favicon.png                 iOS / 安卓主屏图标（512×512）
 og.png                      微信、QQ、Twitter 分享卡片图（1200×630）
-CNAME                       GitHub Pages 绑定自定义域名用（已填好）
+CNAME                       GitHub Pages 绑定自定义域名用（已填好 punycode）
 双手交叉站立.png            奶龙原图素材 ← 保留着，方便以后重做抠图
 tools/prepare_nailong.py    奶龙抠图 → core.png / core.webp / favicon.*
 tools/build_assets.py       文字环 ring.svg + 分享卡片 tools/og.html
@@ -154,8 +154,9 @@ python tools/build_assets.py       # 文字环 → ring.svg + tools/og.html
    git push -u origin main
    ```
 3. **开 Pages**：仓库 → Settings → Pages → Source 选 `Deploy from a branch` → 分支 `main`、目录 `/ (root)` → Save。
-4. **绑域名**：同页面 Custom domain 填 `宇宙奶龙大学.com`。仓库里的 `CNAME` 文件我已经放好了（内容就是这个域名），
-   注意 GitHub 要求**国际化域名必须填 punycode**，也就是 `xn--psszg58cydsdq780c.com`；两种写法 GitHub 都能识别，但建议填 punycode 更保险。
+4. **绑域名**：同页面 Custom domain 填 `xn--psszg58cydsdq780c.com`（punycode 写法，GitHub 要求国际化域名用它）。
+   仓库里的 `CNAME` 文件我已经放好了，内容就是这个 punycode 域名 —— 注意别手工改成中文，
+   GitHub 每次部署都会按这个文件校正域名，中文字符在有些环节会出问题。
 5. **加解析**（DNSPod，NS 不用动）：
 
    | 主机记录 | 类型 | 记录值 |
